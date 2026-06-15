@@ -78,6 +78,10 @@ const weekdayFormatter = new Intl.DateTimeFormat("ru-RU", { timeZone: TOMSK_TIME
 const shortDateFormatter = new Intl.DateTimeFormat("ru-RU", { timeZone: TOMSK_TIME_ZONE, day: "numeric", month: "long", weekday: "long" });
 
 let activeProfile = "dima";
+let activeViewer = ["dima", "alexandra"].includes(localStorage.getItem("schedule-viewer")) ? localStorage.getItem("schedule-viewer") : "dima";
+let meetingRequests = [];
+let activeSlot = null;
+const viewerNames = { dima: "Дима", alexandra: "Александра" };
 
 function dateAtNoon(date) { return new Date(`${date}T12:00:00+07:00`); }
 function eventDate(date, time) { return new Date(`${date}T${time === "24:00" ? "23:59:59" : `${time}:00`}+07:00`); }
@@ -162,6 +166,28 @@ function allEvents(profile) {
   return scheduleForProfile(profile).flatMap(day => normalizedEvents(day, profile).map(event => ({ ...event, date: day.date })));
 }
 
+function slotKey(slot) {
+  return `${slot.profile}|${slot.date}|${slot.start}|${slot.end}`;
+}
+
+function requestsForSlot(slot) {
+  const key = slotKey(slot);
+  return meetingRequests.filter(request => slotKey(request) === key);
+}
+
+async function loadMeetingRequests() {
+  try {
+    const response = await fetch("/api/requests", { cache: "no-store" });
+    if (!response.ok) throw new Error("Не удалось загрузить отметки");
+    const payload = await response.json();
+    meetingRequests = Array.isArray(payload.requests) ? payload.requests : [];
+    renderSchedule(getNow(), true);
+  } catch (error) {
+    console.error(error);
+    document.querySelector("#request-error").textContent = "Общие отметки временно недоступны";
+  }
+}
+
 function getState(now, profile) {
   const events = allEvents(profile);
   const current = events.find(event => eventDate(event.date, event.start) <= now && now < eventDate(event.date, event.end));
@@ -189,8 +215,10 @@ function renderStatus(now) {
   next ? renderEventStatus(nextTarget, next) : renderEmptyStatus(nextTarget, "Событий больше нет", "Пора планировать новые встречи");
 }
 
-function renderSchedule(now) {
+function renderSchedule(now, keepScroll = false) {
   const list = document.querySelector("#schedule-list");
+  const scroll = document.querySelector("#timeline-scroll");
+  const oldScroll = keepScroll ? scroll.scrollLeft : null;
   const todayKey = getTomskDateKey(now);
   const { current, next } = getState(now, activeProfile);
   const rows = scheduleForProfile(activeProfile).map(day => {
@@ -208,12 +236,34 @@ function renderSchedule(now) {
     const timeline = document.createElement("div");
     timeline.className = "day-timeline";
     normalizedEvents(day, activeProfile).forEach(event => {
-      const item = document.createElement("div");
+      const isFree = ["free", "love-free"].includes(event.type);
+      const item = document.createElement(isFree ? "button" : "div");
       item.className = `timeline-event ${event.type}`;
+      if (isFree) {
+        item.type = "button";
+        item.classList.add("is-actionable");
+        item.dataset.profile = activeProfile;
+        item.dataset.date = day.date;
+        item.dataset.start = event.start;
+        item.dataset.end = event.end;
+        item.setAttribute("aria-label", `${event.start}–${event.end}: ${event.title}. Добавить желание встретиться`);
+      }
       item.style.setProperty("--start", timelinePoint(event.start));
       item.style.setProperty("--end", timelinePoint(event.end));
       item.title = `${event.start}–${event.end}: ${event.title}. ${event.detail}`;
       item.innerHTML = `<strong>${event.title}</strong><span class="event-time">${event.start}–${event.end}</span><span>${event.detail}</span>`;
+      if (isFree) {
+        const slot = { profile: activeProfile, date: day.date, start: event.start, end: event.end };
+        const slotRequests = requestsForSlot(slot);
+        if (slotRequests.length) {
+          item.classList.add("has-requests");
+          const summary = document.createElement("span");
+          summary.className = "request-summary";
+          summary.textContent = slotRequests.map(request => viewerNames[request.author]).join(" + ");
+          item.append(summary);
+        }
+        item.addEventListener("click", () => openRequestDialog(slot));
+      }
       if (eventDate(day.date, event.end) <= now) item.classList.add("is-past");
       if (current && current.date === day.date && current.start === event.start) item.classList.add("is-current");
       if (!current && next && next.date === day.date && next.start === event.start) item.classList.add("is-next");
@@ -224,6 +274,7 @@ function renderSchedule(now) {
   });
   list.replaceChildren(...rows);
   applyFilters();
+  if (oldScroll !== null) scroll.scrollLeft = oldScroll;
 }
 
 function applyFilters() {
@@ -298,9 +349,118 @@ function setProfile(profile) {
   document.querySelector(".schedule-section").classList.toggle("love-theme", profile === "love");
   document.querySelector(".disciplines").hidden = profile === "love";
   refreshDynamicState();
+  requestAnimationFrame(scrollToDaytime);
+}
+
+function setViewer(viewer) {
+  activeViewer = viewer;
+  localStorage.setItem("schedule-viewer", viewer);
+  document.querySelectorAll(".viewer-button").forEach(button => {
+    const active = button.dataset.viewer === viewer;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+}
+
+function renderDialogRequests(slot) {
+  const target = document.querySelector("#slot-requests");
+  const requests = requestsForSlot(slot);
+  if (!requests.length) {
+    target.innerHTML = '<p class="no-requests">Пока никто не оставил пожелание на это время.</p>';
+    return;
+  }
+  target.replaceChildren(...requests.map(request => {
+    const item = document.createElement("article");
+    item.className = `slot-request request-${request.author}`;
+    const name = document.createElement("strong");
+    name.textContent = viewerNames[request.author];
+    const message = document.createElement("p");
+    message.textContent = request.message || "Хочет встретиться в это время ♡";
+    item.append(name, message);
+    return item;
+  }));
+}
+
+function openRequestDialog(slot) {
+  activeSlot = slot;
+  const dialog = document.querySelector("#request-dialog");
+  const ownRequest = requestsForSlot(slot).find(request => request.author === activeViewer);
+  document.querySelector("#request-slot-title").textContent = `${rowDateFormatter.format(dateAtNoon(slot.date))}, ${slot.start}–${slot.end}`;
+  document.querySelector("#request-author").textContent = `Сейчас на сайте: ${viewerNames[activeViewer]}`;
+  document.querySelector("#request-message").value = ownRequest?.message || "";
+  document.querySelector("#delete-request").hidden = !ownRequest;
+  document.querySelector("#request-error").hidden = true;
+  renderDialogRequests(slot);
+  dialog.showModal();
+}
+
+function closeRequestDialog() {
+  document.querySelector("#request-dialog").close();
+  activeSlot = null;
+}
+
+async function saveRequest(event) {
+  event.preventDefault();
+  if (!activeSlot) return;
+  const errorTarget = document.querySelector("#request-error");
+  const button = document.querySelector("#save-request");
+  button.disabled = true;
+  errorTarget.hidden = true;
+  try {
+    const response = await fetch("/api/requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...activeSlot, author: activeViewer, message: document.querySelector("#request-message").value.trim() })
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || "Не удалось сохранить отметку");
+    await refreshRequestsWithoutRender();
+    closeRequestDialog();
+    renderSchedule(getNow(), true);
+  } catch (error) {
+    errorTarget.textContent = error.message;
+    errorTarget.hidden = false;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function deleteRequest() {
+  if (!activeSlot) return;
+  const errorTarget = document.querySelector("#request-error");
+  try {
+    const response = await fetch("/api/requests", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...activeSlot, author: activeViewer, message: "" })
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || "Не удалось удалить отметку");
+    await refreshRequestsWithoutRender();
+    closeRequestDialog();
+    renderSchedule(getNow(), true);
+  } catch (error) {
+    errorTarget.textContent = error.message;
+    errorTarget.hidden = false;
+  }
+}
+
+async function refreshRequestsWithoutRender() {
+  const response = await fetch("/api/requests", { cache: "no-store" });
+  const payload = await response.json();
+  meetingRequests = Array.isArray(payload.requests) ? payload.requests : [];
+}
+
+function scrollToDaytime() {
+  const scroll = document.querySelector("#timeline-scroll");
+  const canvas = document.querySelector(".timeline-canvas");
+  const dateWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--date-column")) || 175;
+  const timelineWidth = canvas.scrollWidth - dateWidth;
+  scroll.scrollLeft = Math.max(0, dateWidth + timelineWidth * (8 / 24) - scroll.clientWidth * 0.18);
 }
 
 document.querySelectorAll(".profile-tab").forEach(button => button.addEventListener("click", () => setProfile(button.dataset.profile)));
+document.querySelectorAll(".viewer-button").forEach(button => button.addEventListener("click", () => setViewer(button.dataset.viewer)));
 document.querySelector("#show-past").addEventListener("change", applyFilters);
 document.querySelector("#today-button").addEventListener("click", () => {
   const row = document.querySelector(`#day-${getTomskDateKey(getNow())}`);
@@ -313,9 +473,22 @@ document.querySelector("#disciplines-toggle").addEventListener("click", event =>
   event.currentTarget.setAttribute("aria-expanded", String(open));
   event.currentTarget.textContent = open ? "Скрыть список" : "Показать список";
 });
+document.querySelector("#request-form").addEventListener("submit", saveRequest);
+document.querySelector("#delete-request").addEventListener("click", deleteRequest);
+document.querySelector(".dialog-close").addEventListener("click", closeRequestDialog);
+document.querySelector("[data-close-dialog]").addEventListener("click", closeRequestDialog);
+document.querySelector("#request-dialog").addEventListener("click", event => {
+  if (event.target === event.currentTarget) closeRequestDialog();
+});
 
 renderDisciplines();
+setViewer(activeViewer);
 refreshDynamicState();
+scrollToDaytime();
+loadMeetingRequests();
+setInterval(() => {
+  if (!document.hidden && !document.querySelector("#request-dialog").open) loadMeetingRequests();
+}, 15000);
 setInterval(() => {
   const oldMinute = document.querySelector("#tomsk-time").textContent.slice(0, 5);
   const now = updateClock();

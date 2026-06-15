@@ -59,6 +59,17 @@
       </button>
     </section>
 
+    <section class="viewer-panel" aria-labelledby="viewer-heading">
+      <div>
+        <p id="viewer-heading">Кто сейчас на сайте?</p>
+        <span>Выбор сохранится на этом устройстве</span>
+      </div>
+      <div class="viewer-switch" role="group" aria-label="Текущий пользователь">
+        <button class="viewer-button is-active" type="button" data-viewer="dima" aria-pressed="true">Дима</button>
+        <button class="viewer-button" type="button" data-viewer="alexandra" aria-pressed="false">Александра (Любимка)</button>
+      </div>
+    </section>
+
     <section class="status-panel" aria-labelledby="status-heading">
       <h2 id="status-heading" class="sr-only">Текущее состояние выбранного расписания</h2>
       <article class="status-block status-now">
@@ -91,24 +102,29 @@
         </div>
       </div>
 
-      <div class="timeline-head" aria-hidden="true">
-        <span class="date-column-title">Дата</span>
-        <div class="time-scale">
-          <span style="--point: 0%">00:00</span>
-          <span style="--point: 16.667%">04:00</span>
-          <span style="--point: 33.333%">08:00</span>
-          <span style="--point: 50%">12:00</span>
-          <span style="--point: 66.667%">16:00</span>
-          <span style="--point: 83.333%">20:00</span>
-          <span class="scale-end" style="--point: 100%">24:00</span>
+      <div class="scroll-hint">Прокручивай расписание по времени →</div>
+      <div id="timeline-scroll" class="timeline-scroll" tabindex="0" aria-label="Расписание с горизонтальной прокруткой по времени">
+        <div class="timeline-canvas">
+          <div class="timeline-head" aria-hidden="true">
+            <span class="date-column-title">Дата</span>
+            <div class="time-scale">
+              <span style="--point: 0%">00:00</span>
+              <span style="--point: 16.667%">04:00</span>
+              <span style="--point: 33.333%">08:00</span>
+              <span style="--point: 50%">12:00</span>
+              <span style="--point: 66.667%">16:00</span>
+              <span style="--point: 83.333%">20:00</span>
+              <span class="scale-end" style="--point: 100%">24:00</span>
+            </div>
+          </div>
+          <div id="schedule-list" class="schedule-list"></div>
         </div>
       </div>
-
-      <div id="schedule-list" class="schedule-list"></div>
       <div class="legend" aria-label="Обозначения">
         <span><i class="legend-swatch sleep"></i>Сладко спим</span>
         <span><i class="legend-swatch busy"></i>Занятия / работа</span>
         <span><i class="legend-swatch free"></i>Можно встретиться</span>
+        <span><i class="legend-swatch request"></i>Есть желание встретиться</span>
       </div>
     </section>
 
@@ -127,6 +143,28 @@
   <template id="empty-status-template">
     <div class="status-empty"><strong></strong><span></span></div>
   </template>
+
+  <dialog id="request-dialog" class="request-dialog">
+    <form id="request-form" method="dialog">
+      <div class="dialog-heading">
+        <div>
+          <p>Хочу встретиться</p>
+          <h2 id="request-slot-title">Свободное время</h2>
+        </div>
+        <button class="dialog-close" type="button" aria-label="Закрыть">×</button>
+      </div>
+      <p id="request-author" class="request-author"></p>
+      <label for="request-message">Что хочется сделать?</label>
+      <textarea id="request-message" maxlength="500" rows="4" placeholder="Например: погулять, сходить в кафе или просто побыть вместе"></textarea>
+      <div id="slot-requests" class="slot-requests"></div>
+      <p id="request-error" class="form-error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button id="delete-request" class="button-secondary" type="button" hidden>Убрать мою отметку</button>
+        <button class="button-secondary" type="button" data-close-dialog>Отмена</button>
+        <button id="save-request" class="button-primary" type="submit">Сохранить желание</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="app.js"></script>
 </body>
