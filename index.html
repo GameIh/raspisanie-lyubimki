@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Расписание твоей любимки на лето 2026 года по томскому времени.">
-  <title>Расписание твоей любимки — лето 2026</title>
+  <meta name="description" content="Расписание Димы и любимки с общим временем для встреч по Томску.">
+  <title>Расписание твоей любимки</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,7 +12,7 @@
     <header class="site-header">
       <div>
         <h1>Расписание твоей любимки <span class="title-heart" aria-hidden="true">♡</span></h1>
-        <p>Программная инженерия <span aria-hidden="true">·</span> Лето 2026</p>
+        <p>Ищем время друг для друга</p>
       </div>
       <div class="tomsk-clock" aria-live="polite">
         <div class="clock-zone">
@@ -24,42 +24,68 @@
       </div>
     </header>
 
+    <section class="love-counters" aria-labelledby="love-heading">
+      <div class="counter-main">
+        <p id="love-heading">Мы общаемся</p>
+        <strong id="together-counter">Считаем…</strong>
+        <span>с 7 июня 2026, 21:00 по Томску</span>
+      </div>
+      <article class="milestone">
+        <span class="milestone-icon" aria-hidden="true">♡</span>
+        <div>
+          <p>Первая встреча</p>
+          <strong>14 июня, 03:00</strong>
+          <span id="meeting-counter">Считаем…</span>
+        </div>
+      </article>
+      <article class="milestone">
+        <span class="milestone-icon kiss" aria-hidden="true">♥</span>
+        <div>
+          <p>Первый поцелуй</p>
+          <strong>15 июня 2026</strong>
+          <span id="kiss-counter">Считаем…</span>
+        </div>
+      </article>
+    </section>
+
+    <section class="profile-switch" aria-label="Выбор расписания">
+      <button class="profile-tab is-active" type="button" data-profile="dima" aria-pressed="true">
+        <span class="profile-dot dima-dot" aria-hidden="true"></span>
+        Расписание Дима
+      </button>
+      <button class="profile-tab" type="button" data-profile="love" aria-pressed="false">
+        <span class="profile-dot love-dot" aria-hidden="true"></span>
+        Расписание Любимка
+      </button>
+    </section>
+
     <section class="status-panel" aria-labelledby="status-heading">
-      <h2 id="status-heading" class="sr-only">Текущее состояние расписания</h2>
+      <h2 id="status-heading" class="sr-only">Текущее состояние выбранного расписания</h2>
       <article class="status-block status-now">
-        <p class="status-label">Сейчас</p>
+        <p class="status-label"><span id="active-person">Дима</span> сейчас</p>
         <div id="current-status"></div>
       </article>
       <article class="status-block">
-        <p class="status-label">Следующее занятие</p>
+        <p class="status-label">Следующее событие</p>
         <div id="next-status"></div>
       </article>
-      <article class="status-block period-block">
-        <div class="period-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M8 3v4M16 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"></path></svg>
-        </div>
-        <div>
-          <p class="status-label">Период занятий</p>
-          <strong class="period-dates">15 июня — 1 июля 2026</strong>
-          <span>Учебные занятия</span>
-        </div>
+      <article class="status-block date-range-block">
+        <p class="status-label">Период расписания</p>
+        <strong>15 июня — 1 июля 2026</strong>
+        <span>Все время указано по Томску</span>
       </article>
     </section>
 
     <section class="schedule-section" aria-labelledby="schedule-heading">
       <div class="toolbar">
         <div>
-          <h2 id="schedule-heading">Расписание по дням</h2>
-          <p id="schedule-caption">Время занятий указано по Томску</p>
+          <h2 id="schedule-heading">Расписание Дима</h2>
+          <p id="schedule-caption">Полные сутки: от 00:00 до 24:00</p>
         </div>
         <div class="toolbar-actions">
           <label class="check-control">
             <input id="show-past" type="checkbox" checked>
-            <span>Показывать прошедшие</span>
-          </label>
-          <label class="check-control">
-            <input id="show-empty" type="checkbox" checked>
-            <span>Дни без занятий</span>
+            <span>Прошедшие дни</span>
           </label>
           <button id="today-button" type="button">Сегодня</button>
         </div>
@@ -68,24 +94,28 @@
       <div class="timeline-head" aria-hidden="true">
         <span class="date-column-title">Дата</span>
         <div class="time-scale">
-          <span style="--point: 0%">08:50</span>
-          <span style="--point: 14.1%">10:40</span>
-          <span style="--point: 33.9%">13:15</span>
-          <span style="--point: 47.4%">15:00</span>
-          <span style="--point: 60.9%">16:45</span>
-          <span style="--point: 74.4%">18:30</span>
-          <span style="--point: 87.8%">20:15</span>
-          <span class="scale-end" style="--point: 100%">21:50</span>
+          <span style="--point: 0%">00:00</span>
+          <span style="--point: 16.667%">04:00</span>
+          <span style="--point: 33.333%">08:00</span>
+          <span style="--point: 50%">12:00</span>
+          <span style="--point: 66.667%">16:00</span>
+          <span style="--point: 83.333%">20:00</span>
+          <span class="scale-end" style="--point: 100%">24:00</span>
         </div>
       </div>
 
       <div id="schedule-list" class="schedule-list"></div>
+      <div class="legend" aria-label="Обозначения">
+        <span><i class="legend-swatch sleep"></i>Сладко спим</span>
+        <span><i class="legend-swatch busy"></i>Занятия / работа</span>
+        <span><i class="legend-swatch free"></i>Можно встретиться</span>
+      </div>
     </section>
 
     <section class="disciplines" aria-labelledby="disciplines-heading">
       <div class="section-heading-row">
         <div>
-          <h2 id="disciplines-heading">Дисциплины</h2>
+          <h2 id="disciplines-heading">Дисциплины Димы</h2>
           <p>Полные названия и преподаватели</p>
         </div>
         <button id="disciplines-toggle" class="text-button" type="button" aria-expanded="false" aria-controls="disciplines-list">Показать список</button>
@@ -95,10 +125,7 @@
   </main>
 
   <template id="empty-status-template">
-    <div class="status-empty">
-      <strong></strong>
-      <span></span>
-    </div>
+    <div class="status-empty"><strong></strong><span></span></div>
   </template>
 
   <script src="app.js"></script>
