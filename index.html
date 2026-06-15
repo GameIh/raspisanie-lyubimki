@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Расписание твоей любимки на лето 2026 года по томскому времени.">
+  <title>Расписание твоей любимки — лето 2026</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="site-header">
+      <div>
+        <h1>Расписание твоей любимки <span class="title-heart" aria-hidden="true">♡</span></h1>
+        <p>Программная инженерия <span aria-hidden="true">·</span> Лето 2026</p>
+      </div>
+      <div class="tomsk-clock" aria-live="polite">
+        <div class="clock-zone">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+          <span>Томск, UTC+7</span>
+        </div>
+        <strong id="tomsk-time">--:--:--</strong>
+        <span id="tomsk-date">Загрузка даты…</span>
+      </div>
+    </header>
+
+    <section class="status-panel" aria-labelledby="status-heading">
+      <h2 id="status-heading" class="sr-only">Текущее состояние расписания</h2>
+      <article class="status-block status-now">
+        <p class="status-label">Сейчас</p>
+        <div id="current-status"></div>
+      </article>
+      <article class="status-block">
+        <p class="status-label">Следующее занятие</p>
+        <div id="next-status"></div>
+      </article>
+      <article class="status-block period-block">
+        <div class="period-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M8 3v4M16 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"></path></svg>
+        </div>
+        <div>
+          <p class="status-label">Период занятий</p>
+          <strong class="period-dates">15 июня — 1 июля 2026</strong>
+          <span>Учебные занятия</span>
+        </div>
+      </article>
+    </section>
+
+    <section class="schedule-section" aria-labelledby="schedule-heading">
+      <div class="toolbar">
+        <div>
+          <h2 id="schedule-heading">Расписание по дням</h2>
+          <p id="schedule-caption">Время занятий указано по Томску</p>
+        </div>
+        <div class="toolbar-actions">
+          <label class="check-control">
+            <input id="show-past" type="checkbox" checked>
+            <span>Показывать прошедшие</span>
+          </label>
+          <label class="check-control">
+            <input id="show-empty" type="checkbox" checked>
+            <span>Дни без занятий</span>
+          </label>
+          <button id="today-button" type="button">Сегодня</button>
+        </div>
+      </div>
+
+      <div class="timeline-head" aria-hidden="true">
+        <span class="date-column-title">Дата</span>
+        <div class="time-scale">
+          <span style="--point: 0%">08:50</span>
+          <span style="--point: 14.1%">10:40</span>
+          <span style="--point: 33.9%">13:15</span>
+          <span style="--point: 47.4%">15:00</span>
+          <span style="--point: 60.9%">16:45</span>
+          <span style="--point: 74.4%">18:30</span>
+          <span style="--point: 87.8%">20:15</span>
+          <span class="scale-end" style="--point: 100%">21:50</span>
+        </div>
+      </div>
+
+      <div id="schedule-list" class="schedule-list"></div>
+    </section>
+
+    <section class="disciplines" aria-labelledby="disciplines-heading">
+      <div class="section-heading-row">
+        <div>
+          <h2 id="disciplines-heading">Дисциплины</h2>
+          <p>Полные названия и преподаватели</p>
+        </div>
+        <button id="disciplines-toggle" class="text-button" type="button" aria-expanded="false" aria-controls="disciplines-list">Показать список</button>
+      </div>
+      <div id="disciplines-list" class="disciplines-grid" hidden></div>
+    </section>
+  </main>
+
+  <template id="empty-status-template">
+    <div class="status-empty">
+      <strong></strong>
+      <span></span>
+    </div>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
