@@ -23,20 +23,90 @@ DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 DB_LOCK = threading.Lock()
 
 F1_BACKGROUND_EVENTS = [
-    ("f1-2026-britain-race", "F1: Гран-при Великобритании", "2026-07-05", "21:00", "23:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
-    ("f1-2026-belgium-race", "F1: Гран-при Бельгии", "2026-07-19", "20:00", "22:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
-    ("f1-2026-hungary-race", "F1: Гран-при Венгрии", "2026-07-26", "20:00", "22:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
-    ("f1-2026-netherlands-race", "F1: Гран-при Нидерландов", "2026-08-23", "20:00", "22:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
-    ("f1-2026-italy-race", "F1: Гран-при Италии", "2026-09-06", "20:00", "22:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
-    ("f1-2026-spain-race", "F1: Гран-при Испании", "2026-09-13", "20:00", "22:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
-    ("f1-2026-azerbaijan-race", "F1: Гран-при Азербайджана", "2026-09-26", "18:00", "20:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
-    ("f1-2026-singapore-race", "F1: Гран-при Сингапура", "2026-10-11", "19:00", "21:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
-    ("f1-2026-usa-race", "F1: Гран-при США", "2026-10-26", "03:00", "05:00", "Гонка. Время переведено из МСК в Томск (+4 часа): старт 25.10 в 23:00 МСК."),
-    ("f1-2026-mexico-race", "F1: Гран-при Мексики", "2026-11-02", "03:00", "05:00", "Гонка. Время переведено из МСК в Томск (+4 часа): старт 01.11 в 23:00 МСК."),
-    ("f1-2026-brazil-race", "F1: Гран-при Бразилии", "2026-11-09", "00:00", "02:00", "Гонка. Время переведено из МСК в Томск (+4 часа): старт 08.11 в 20:00 МСК."),
-    ("f1-2026-las-vegas-race", "F1: Гран-при Лас-Вегаса", "2026-11-22", "11:00", "13:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
-    ("f1-2026-qatar-race", "F1: Гран-при Катара", "2026-11-29", "23:00", "23:59", "Гонка. Время переведено из МСК в Томск (+4 часа); событие обрезано до конца суток в текущей модели расписания."),
-    ("f1-2026-abu-dhabi-race", "F1: Гран-при Абу-Даби", "2026-12-06", "20:00", "22:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
+    ("f1-2026-britain-practice2", "F1: Гран-при Великобритании. Свободная практика 2", "2026-07-03", "00:00", "23:59", ""),
+    ("f1-2026-britain-practice1", "F1: Гран-при Великобритании. Свободная практика 1", "2026-07-03", "18:30", "19:30", ""),
+    ("f1-2026-britain-sprint-qualifying", "F1: Гран-при Великобритании. Спринт-квалификация", "2026-07-03", "22:30", "23:30", ""),
+    ("f1-2026-britain-practice3", "F1: Гран-при Великобритании. Свободная практика 3", "2026-07-04", "00:00", "23:59", ""),
+    ("f1-2026-britain-sprint", "F1: Гран-при Великобритании. Спринт", "2026-07-04", "18:00", "19:00", ""),
+    ("f1-2026-britain-qualifying", "F1: Гран-при Великобритании. Квалификация", "2026-07-04", "22:00", "23:00", ""),
+    ("f1-2026-britain-race", "F1: Гран-при Великобритании. Гонка (52 круга, 306.198 км)", "2026-07-05", "21:00", "23:00", ""),
+    ("f1-2026-belgium-sprint-qualifying", "F1: Гран-при Бельгии. Спринт-квалификация", "2026-07-17", "00:00", "23:59", ""),
+    ("f1-2026-belgium-practice1", "F1: Гран-при Бельгии. Свободная практика 1", "2026-07-17", "18:30", "19:30", ""),
+    ("f1-2026-belgium-practice2", "F1: Гран-при Бельгии. Свободная практика 2", "2026-07-17", "22:00", "23:00", ""),
+    ("f1-2026-belgium-sprint", "F1: Гран-при Бельгии. Спринт", "2026-07-18", "00:00", "23:59", ""),
+    ("f1-2026-belgium-practice3", "F1: Гран-при Бельгии. Свободная практика 3", "2026-07-18", "17:30", "18:30", ""),
+    ("f1-2026-belgium-qualifying", "F1: Гран-при Бельгии. Квалификация", "2026-07-18", "21:00", "22:00", ""),
+    ("f1-2026-belgium-race", "F1: Гран-при Бельгии. Гонка (44 круга, 308.052 км)", "2026-07-19", "20:00", "22:00", ""),
+    ("f1-2026-hungary-practice1", "F1: Гран-при Венгрии. Свободная практика 1", "2026-07-24", "18:30", "19:30", ""),
+    ("f1-2026-hungary-practice2", "F1: Гран-при Венгрии. Свободная практика 2", "2026-07-24", "22:00", "23:00", ""),
+    ("f1-2026-hungary-practice3", "F1: Гран-при Венгрии. Свободная практика 3", "2026-07-25", "17:30", "18:30", ""),
+    ("f1-2026-hungary-qualifying", "F1: Гран-при Венгрии. Квалификация", "2026-07-25", "21:00", "22:00", ""),
+    ("f1-2026-hungary-race", "F1: Гран-при Венгрии. Гонка (70 кругов, 306.630 км)", "2026-07-26", "20:00", "22:00", ""),
+    ("f1-2026-netherlands-practice2", "F1: Гран-при Нидерландов. Свободная практика 2", "2026-08-21", "00:00", "23:59", ""),
+    ("f1-2026-netherlands-practice1", "F1: Гран-при Нидерландов. Свободная практика 1", "2026-08-21", "17:30", "18:30", ""),
+    ("f1-2026-netherlands-sprint-qualifying", "F1: Гран-при Нидерландов. Спринт-квалификация", "2026-08-21", "21:30", "22:30", ""),
+    ("f1-2026-netherlands-practice3", "F1: Гран-при Нидерландов. Свободная практика 3", "2026-08-22", "00:00", "23:59", ""),
+    ("f1-2026-netherlands-sprint", "F1: Гран-при Нидерландов. Спринт", "2026-08-22", "17:00", "18:00", ""),
+    ("f1-2026-netherlands-qualifying", "F1: Гран-при Нидерландов. Квалификация", "2026-08-22", "21:00", "22:00", ""),
+    ("f1-2026-netherlands-race", "F1: Гран-при Нидерландов. Гонка (72 круга, 306.587 км)", "2026-08-23", "20:00", "22:00", ""),
+    ("f1-2026-italy-practice1", "F1: Гран-при Италии. Свободная практика 1", "2026-09-04", "17:30", "18:30", ""),
+    ("f1-2026-italy-practice2", "F1: Гран-при Италии. Свободная практика 2", "2026-09-04", "21:00", "22:00", ""),
+    ("f1-2026-italy-practice3", "F1: Гран-при Италии. Свободная практика 3", "2026-09-05", "17:30", "18:30", ""),
+    ("f1-2026-italy-qualifying", "F1: Гран-при Италии. Квалификация", "2026-09-05", "21:00", "22:00", ""),
+    ("f1-2026-italy-race", "F1: Гран-при Италии. Гонка (53 круга, 306.720 км)", "2026-09-06", "20:00", "22:00", ""),
+    ("f1-2026-spain-practice1", "F1: Гран-при Испании. Свободная практика 1", "2026-09-11", "18:30", "19:30", ""),
+    ("f1-2026-spain-practice2", "F1: Гран-при Испании. Свободная практика 2", "2026-09-11", "22:00", "23:00", ""),
+    ("f1-2026-spain-practice3", "F1: Гран-при Испании. Свободная практика 3", "2026-09-12", "17:30", "18:30", ""),
+    ("f1-2026-spain-qualifying", "F1: Гран-при Испании. Квалификация", "2026-09-12", "21:00", "22:00", ""),
+    ("f1-2026-spain-race", "F1: Гран-при Испании. Гонка (66 кругов, 307.236 км)", "2026-09-13", "20:00", "22:00", ""),
+    ("f1-2026-azerbaijan-practice1", "F1: Гран-при Азербайджана. Свободная практика 1", "2026-09-24", "15:30", "16:30", ""),
+    ("f1-2026-azerbaijan-practice2", "F1: Гран-при Азербайджана. Свободная практика 2", "2026-09-24", "19:00", "20:00", ""),
+    ("f1-2026-azerbaijan-practice3", "F1: Гран-при Азербайджана. Свободная практика 3", "2026-09-25", "15:30", "16:30", ""),
+    ("f1-2026-azerbaijan-qualifying", "F1: Гран-при Азербайджана. Квалификация", "2026-09-25", "19:00", "20:00", ""),
+    ("f1-2026-azerbaijan-race", "F1: Гран-при Азербайджана. Гонка (51 круг, 306.049 км)", "2026-09-26", "18:00", "20:00", ""),
+    ("f1-2026-singapore-practice2", "F1: Гран-при Сингапура. Свободная практика 2", "2026-10-09", "00:00", "23:59", ""),
+    ("f1-2026-singapore-practice1", "F1: Гран-при Сингапура. Свободная практика 1", "2026-10-09", "15:30", "16:30", ""),
+    ("f1-2026-singapore-sprint-qualifying", "F1: Гран-при Сингапура. Спринт Квалификация", "2026-10-09", "19:30", "20:30", ""),
+    ("f1-2026-singapore-practice3", "F1: Гран-при Сингапура. Свободная практика 3", "2026-10-10", "00:00", "23:59", ""),
+    ("f1-2026-singapore-sprint", "F1: Гран-при Сингапура. Спринт", "2026-10-10", "16:00", "17:00", ""),
+    ("f1-2026-singapore-qualifying", "F1: Гран-при Сингапура. Квалификация", "2026-10-10", "20:00", "21:00", ""),
+    ("f1-2026-singapore-race", "F1: Гран-при Сингапура. Гонка (62 круга, 305.337 км)", "2026-10-11", "19:00", "21:00", ""),
+    ("f1-2026-usa-sprint-qualifying", "F1: Гран-при США. Спринт-квалификация", "2026-10-23", "00:00", "23:59", ""),
+    ("f1-2026-usa-practice1", "F1: Гран-при США. Свободная практика 1", "2026-10-24", "00:30", "01:30", ""),
+    ("f1-2026-usa-practice2", "F1: Гран-при США. Свободная практика 2", "2026-10-24", "04:00", "05:00", ""),
+    ("f1-2026-usa-sprint", "F1: Гран-при США. Спринт", "2026-10-24", "00:00", "23:59", ""),
+    ("f1-2026-usa-practice3", "F1: Гран-при США. Свободная практика 3", "2026-10-25", "00:30", "01:30", ""),
+    ("f1-2026-usa-qualifying", "F1: Гран-при США. Квалификация", "2026-10-25", "04:00", "05:00", ""),
+    ("f1-2026-usa-race", "F1: Гран-при США. Гонка (56 кругов, 308.405 км)", "2026-10-26", "03:00", "05:00", ""),
+    ("f1-2026-mexico-practice1", "F1: Гран-при Мексики. Свободная практика 1", "2026-10-31", "01:30", "02:30", ""),
+    ("f1-2026-mexico-practice2", "F1: Гран-при Мексики. Свободная практика 2", "2026-10-31", "05:00", "06:00", ""),
+    ("f1-2026-mexico-practice3", "F1: Гран-при Мексики. Свободная практика 3", "2026-11-01", "00:30", "01:30", ""),
+    ("f1-2026-mexico-qualifying", "F1: Гран-при Мексики. Квалификация", "2026-11-01", "04:00", "05:00", ""),
+    ("f1-2026-mexico-race", "F1: Гран-при Мексики. Гонка (71 круг, 305.354 км)", "2026-11-02", "03:00", "05:00", ""),
+    ("f1-2026-brazil-sprint-qualifying", "F1: Гран-при Бразилии. Спринт-квалификация", "2026-11-06", "00:00", "23:59", ""),
+    ("f1-2026-brazil-practice1", "F1: Гран-при Бразилии. Свободная практика 1", "2026-11-06", "22:30", "23:30", ""),
+    ("f1-2026-brazil-practice2", "F1: Гран-при Бразилии. Свободная практика 2", "2026-11-07", "02:00", "03:00", ""),
+    ("f1-2026-brazil-sprint", "F1: Гран-при Бразилии. Спринт", "2026-11-07", "00:00", "23:59", ""),
+    ("f1-2026-brazil-practice3", "F1: Гран-при Бразилии. Свободная практика 3", "2026-11-07", "21:30", "22:30", ""),
+    ("f1-2026-brazil-qualifying", "F1: Гран-при Бразилии. Квалификация", "2026-11-08", "01:00", "02:00", ""),
+    ("f1-2026-brazil-race", "F1: Гран-при Бразилии. Гонка (71 круг, 305.879 км)", "2026-11-09", "00:00", "02:00", ""),
+    ("f1-2026-las-vegas-practice1", "F1: Гран-при Лас-Вегаса. Свободная практика 1", "2026-11-20", "07:30", "08:30", ""),
+    ("f1-2026-las-vegas-practice2", "F1: Гран-при Лас-Вегаса. Свободная практика 2", "2026-11-20", "11:00", "12:00", ""),
+    ("f1-2026-las-vegas-practice3", "F1: Гран-при Лас-Вегаса. Свободная практика 3", "2026-11-21", "07:30", "08:30", ""),
+    ("f1-2026-las-vegas-qualifying", "F1: Гран-при Лас-Вегаса. Квалификация", "2026-11-21", "11:00", "12:00", ""),
+    ("f1-2026-las-vegas-race", "F1: Гран-при Лас-Вегаса. Гонка (50 кругов, 309.958 км)", "2026-11-22", "11:00", "13:00", ""),
+    ("f1-2026-qatar-sprint-qualifying", "F1: Гран-при Катара. Спринт-квалификация", "2026-11-27", "00:00", "23:59", ""),
+    ("f1-2026-qatar-practice1", "F1: Гран-при Катара. Свободная практика 1", "2026-11-27", "20:30", "21:30", ""),
+    ("f1-2026-qatar-practice2", "F1: Гран-при Катара. Свободная практика 2", "2026-11-28", "00:00", "01:00", ""),
+    ("f1-2026-qatar-sprint", "F1: Гран-при Катара. Спринт", "2026-11-28", "00:00", "23:59", ""),
+    ("f1-2026-qatar-practice3", "F1: Гран-при Катара. Свободная практика 3", "2026-11-28", "21:30", "22:30", ""),
+    ("f1-2026-qatar-qualifying", "F1: Гран-при Катара. Квалификация", "2026-11-29", "01:00", "02:00", ""),
+    ("f1-2026-qatar-race", "F1: Гран-при Катара. Гонка (57 кругов, 308.611 км)", "2026-11-29", "23:00", "2026-11-30", "01:00", ""),
+    ("f1-2026-abu-dhabi-practice1", "F1: Гран-при Абу-Даби. Свободная практика 1", "2026-12-04", "16:30", "17:30", ""),
+    ("f1-2026-abu-dhabi-practice2", "F1: Гран-при Абу-Даби. Свободная практика 2", "2026-12-04", "20:00", "21:00", ""),
+    ("f1-2026-abu-dhabi-practice3", "F1: Гран-при Абу-Даби. Свободная практика 3", "2026-12-05", "17:30", "18:30", ""),
+    ("f1-2026-abu-dhabi-qualifying", "F1: Гран-при Абу-Даби. Квалификация", "2026-12-05", "21:00", "22:00", ""),
+    ("f1-2026-abu-dhabi-race", "F1: Гран-при Абу-Даби. Гонка (58 кругов, 306.183 км)", "2026-12-06", "20:00", "22:00", ""),
 ]
 
 
@@ -71,6 +141,7 @@ def init_database():
                 source_key TEXT UNIQUE,
                 title TEXT NOT NULL,
                 date TEXT NOT NULL,
+                end_date TEXT NOT NULL,
                 start TEXT NOT NULL,
                 end TEXT NOT NULL,
                 kind TEXT NOT NULL,
@@ -86,6 +157,9 @@ def init_database():
         columns = {row["name"] for row in db.execute("PRAGMA table_info(schedule_events)").fetchall()}
         if "source_key" not in columns:
             db.execute("ALTER TABLE schedule_events ADD COLUMN source_key TEXT")
+        if "end_date" not in columns:
+            db.execute("ALTER TABLE schedule_events ADD COLUMN end_date TEXT")
+            db.execute("UPDATE schedule_events SET end_date = date WHERE end_date IS NULL")
         db.execute(
             """
             CREATE UNIQUE INDEX IF NOT EXISTS idx_schedule_events_source_key
@@ -96,18 +170,30 @@ def init_database():
 
 
 def seed_f1_events(db):
-    for source_key, title, date, start, end, note in F1_BACKGROUND_EVENTS:
+    source_keys = [event[0] for event in F1_BACKGROUND_EVENTS]
+    placeholders = ",".join("?" for _ in source_keys)
+    db.execute(
+        f"DELETE FROM schedule_events WHERE source_key LIKE 'f1-2026-%' AND source_key NOT IN ({placeholders})",
+        source_keys,
+    )
+    for event in F1_BACKGROUND_EVENTS:
+        if len(event) == 6:
+            source_key, title, date, start, end, note = event
+            end_date = date
+        else:
+            source_key, title, date, start, end_date, end, note = event
         db.execute(
             """
             INSERT INTO schedule_events
-                (source_key, title, date, start, end, kind, category, participant, note, author)
+                (source_key, title, date, start, end_date, end, kind, category, participant, note, author)
             VALUES
-                (?, ?, ?, ?, ?, 'background', 'background', 'background', ?, 'dima')
+                (?, ?, ?, ?, ?, ?, 'background', 'background', 'background', ?, 'dima')
             ON CONFLICT(source_key)
             DO UPDATE SET
                 title=excluded.title,
                 date=excluded.date,
                 start=excluded.start,
+                end_date=excluded.end_date,
                 end=excluded.end,
                 kind=excluded.kind,
                 category=excluded.category,
@@ -115,7 +201,7 @@ def seed_f1_events(db):
                 note=excluded.note,
                 updated_at=CURRENT_TIMESTAMP
             """,
-            (source_key, title, date, start, end, note),
+            (source_key, title, date, start, end_date, end, note),
         )
 
 
@@ -153,6 +239,7 @@ def validate_slot(payload):
 def validate_event(payload):
     title = str(payload.get("title", "")).strip()
     date = str(payload.get("date", "")).strip()
+    end_date = str(payload.get("end_date", payload.get("date", ""))).strip()
     start = str(payload.get("start", "")).strip()
     end = str(payload.get("end", "")).strip()
     kind = str(payload.get("kind", "")).strip()
@@ -167,7 +254,14 @@ def validate_event(payload):
         raise ValueError("Название слишком длинное")
     if not DATE_RE.fullmatch(date):
         raise ValueError("Некорректная дата")
-    validate_time_range(start, end)
+    if not DATE_RE.fullmatch(end_date):
+        raise ValueError("Некорректная дата окончания")
+    if end_date < date:
+        raise ValueError("Дата окончания не может быть раньше даты начала")
+    if not TIME_RE.fullmatch(start) or not TIME_RE.fullmatch(end):
+        raise ValueError("Некорректное время")
+    if end_date == date and minutes(end) <= minutes(start):
+        raise ValueError("Конец должен быть позже начала")
     if kind not in ALLOWED_KINDS:
         raise ValueError("Неизвестный тип события")
     if category not in ALLOWED_CATEGORIES:
@@ -185,6 +279,7 @@ def validate_event(payload):
     return {
         "title": title,
         "date": date,
+        "end_date": end_date,
         "start": start,
         "end": end,
         "kind": kind,
@@ -224,9 +319,9 @@ class Handler(SimpleHTTPRequestHandler):
             with DB_LOCK, connect() as db:
                 rows = db.execute(
                     """
-                    SELECT id, source_key, title, date, start, end, kind, category, participant, note, author, created_at, updated_at
+                    SELECT id, source_key, title, date, end_date, start, end, kind, category, participant, note, author, created_at, updated_at
                     FROM schedule_events
-                    ORDER BY date, start, end, id
+                    ORDER BY date, start, end_date, end, id
                     """
                 ).fetchall()
             self.send_json(200, {"events": [dict(row) for row in rows]})
@@ -254,15 +349,15 @@ class Handler(SimpleHTTPRequestHandler):
                     cursor = db.execute(
                         """
                         INSERT INTO schedule_events
-                            (title, date, start, end, kind, category, participant, note, author)
+                            (title, date, end_date, start, end, kind, category, participant, note, author)
                         VALUES
-                            (:title, :date, :start, :end, :kind, :category, :participant, :note, :author)
+                            (:title, :date, :end_date, :start, :end, :kind, :category, :participant, :note, :author)
                         """,
                         event,
                     )
                     row = db.execute(
                         """
-                        SELECT id, source_key, title, date, start, end, kind, category, participant, note, author, created_at, updated_at
+                        SELECT id, source_key, title, date, end_date, start, end, kind, category, participant, note, author, created_at, updated_at
                         FROM schedule_events
                         WHERE id = ?
                         """,
@@ -305,6 +400,7 @@ class Handler(SimpleHTTPRequestHandler):
                     UPDATE schedule_events
                     SET title=:title,
                         date=:date,
+                        end_date=:end_date,
                         start=:start,
                         end=:end,
                         kind=:kind,
@@ -322,7 +418,7 @@ class Handler(SimpleHTTPRequestHandler):
                     return
                 row = db.execute(
                     """
-                    SELECT id, source_key, title, date, start, end, kind, category, participant, note, author, created_at, updated_at
+                    SELECT id, source_key, title, date, end_date, start, end, kind, category, participant, note, author, created_at, updated_at
                     FROM schedule_events
                     WHERE id = ?
                     """,

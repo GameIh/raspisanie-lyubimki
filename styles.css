@@ -149,6 +149,9 @@ fieldset input { width: 17px; height: 17px; accent-color: var(--event-color, var
 .timeline-event.background { top: 9px; bottom: 9px; z-index: 1; opacity: .5; border-left-width: 3px; border-style: dotted; background: color-mix(in srgb, var(--event-color) 15%, white); }
 .timeline-event.background strong { font-size: .78rem; }
 .timeline-event.is-background + .timeline-event:not(.background) { z-index: 2; }
+.timeline-event.continues-from-before { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.timeline-event.continues-after { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.timeline-event.continues-after::before { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 8px; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--event-color) 20%, white)); }
 .empty-day { position: relative; z-index: 1; height: 100%; display: flex; align-items: center; padding: 0 22px; color: var(--muted); font-size: .9rem; }
 
 .legend { display: flex; gap: 24px; flex-wrap: wrap; padding: 14px 21px; border-top: 1px solid var(--line); color: var(--muted); font-size: .8rem; }

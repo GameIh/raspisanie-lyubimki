@@ -66,6 +66,18 @@ function eventDate(date, time) {
   return new Date(`${date}T${time === "24:00" ? "23:59:59" : `${time}:00`}+07:00`);
 }
 
+function eventEndDateValue(event) {
+  return event.end_date || event.date;
+}
+
+function eventStartDateTime(event) {
+  return eventDate(event.date, event.start);
+}
+
+function eventEndDateTime(event) {
+  return eventDate(eventEndDateValue(event), event.end);
+}
+
 function timeToMinutes(time) {
   if (time === "24:00") return DAY_END_MINUTES;
   const [hours, minutes] = time.split(":").map(Number);
@@ -115,10 +127,15 @@ function eventMatchesFilters(event) {
     && selectedValues("participant").includes(event.participant);
 }
 
+function eventIntersectsDates(event, dates) {
+  const start = event.date;
+  const end = eventEndDateValue(event);
+  return dates.some(date => start <= date && date <= end);
+}
+
 function visibleEvents() {
-  const visibleSet = new Set(visibleDates);
   return events
-    .filter(event => visibleSet.has(event.date))
+    .filter(event => eventIntersectsDates(event, visibleDates))
     .filter(eventMatchesFilters)
     .sort((a, b) => `${a.date} ${a.start}`.localeCompare(`${b.date} ${b.start}`));
 }
@@ -128,8 +145,8 @@ function nonBackgroundEvents() {
 }
 
 function getState(now) {
-  const current = nonBackgroundEvents().find(event => eventDate(event.date, event.start) <= now && now < eventDate(event.date, event.end));
-  const next = nonBackgroundEvents().find(event => eventDate(event.date, event.start) > now);
+  const current = nonBackgroundEvents().find(event => eventStartDateTime(event) <= now && now < eventEndDateTime(event));
+  const next = nonBackgroundEvents().find(event => eventStartDateTime(event) > now);
   return { current, next };
 }
 
@@ -143,7 +160,7 @@ function renderEventStatus(target, event) {
     <div class="event-status ${event.kind}">
       <span class="status-dot" aria-hidden="true" style="--event-color:${categoryById[event.category]?.color || "#cf416c"}"></span>
       <strong>${escapeHtml(event.title)}</strong>
-      <span>${event.start}–${event.end}</span>
+      <span>${escapeHtml(eventRangeText(event))}</span>
       <span class="status-note">${shortDateFormatter.format(dateAtNoon(event.date))} · ${escapeHtml(eventMeta(event))}</span>
     </div>`;
 }
@@ -187,12 +204,12 @@ function renderSchedule(keepScroll = false) {
 
     const timeline = document.createElement("div");
     timeline.className = "day-timeline";
-    const dayEvents = filtered.filter(event => event.date === date);
+    const dayEvents = filtered.filter(event => event.date <= date && date <= eventEndDateValue(event));
     const background = dayEvents.filter(event => event.kind === "background");
     const foreground = dayEvents.filter(event => event.kind !== "background");
 
-    background.forEach(event => timeline.append(createEventNode(event, true)));
-    foreground.forEach(event => timeline.append(createEventNode(event, false)));
+    background.forEach(event => timeline.append(createEventNode(event, true, date)));
+    foreground.forEach(event => timeline.append(createEventNode(event, false, date)));
     if (!dayEvents.length) {
       const empty = document.createElement("div");
       empty.className = "empty-day";
@@ -210,19 +227,38 @@ function renderSchedule(keepScroll = false) {
   if (oldScroll !== null) scroll.scrollLeft = oldScroll;
 }
 
-function createEventNode(event, background) {
+function segmentForDate(event, date) {
+  const endDate = eventEndDateValue(event);
+  return {
+    start: date === event.date ? event.start : "00:00",
+    end: date === endDate ? event.end : "24:00",
+    continuationStart: date > event.date,
+    continuationEnd: date < endDate
+  };
+}
+
+function eventRangeText(event) {
+  const endDate = eventEndDateValue(event);
+  if (endDate === event.date) return `${event.start}–${event.end}`;
+  return `${rowDateFormatter.format(dateAtNoon(event.date))} ${event.start} — ${rowDateFormatter.format(dateAtNoon(endDate))} ${event.end}`;
+}
+
+function createEventNode(event, background, date) {
+  const segment = segmentForDate(event, date);
   const item = document.createElement("button");
   item.type = "button";
   item.className = `timeline-event ${event.kind} category-${event.category}`;
+  if (segment.continuationStart) item.classList.add("continues-from-before");
+  if (segment.continuationEnd) item.classList.add("continues-after");
   if (background) item.classList.add("is-background");
-  item.style.setProperty("--start", timelinePoint(event.start));
-  item.style.setProperty("--end", timelinePoint(event.end));
+  item.style.setProperty("--start", timelinePoint(segment.start));
+  item.style.setProperty("--end", timelinePoint(segment.end));
   item.style.setProperty("--event-color", categoryById[event.category]?.color || "#cf416c");
-  item.title = `${event.start}–${event.end}: ${event.title}. ${eventMeta(event)}`;
-  item.setAttribute("aria-label", `${event.start}–${event.end}: ${event.title}. Открыть редактирование`);
+  item.title = `${eventRangeText(event)}: ${event.title}. ${eventMeta(event)}`;
+  item.setAttribute("aria-label", `${eventRangeText(event)}: ${event.title}. Открыть редактирование`);
   item.innerHTML = `
     <strong>${escapeHtml(event.title)}</strong>
-    <span class="event-time">${event.start}–${event.end}</span>
+    <span class="event-time">${segment.start}–${segment.end}</span>
     <span>${escapeHtml(eventMeta(event))}</span>`;
   item.addEventListener("click", () => openEventDialog(event));
   return item;
@@ -244,7 +280,7 @@ function renderEventList() {
     item.innerHTML = `
       <span class="event-list-date">${rowDateFormatter.format(dateAtNoon(event.date))}</span>
       <strong>${escapeHtml(event.title)}</strong>
-      <span>${event.start}–${event.end} · ${escapeHtml(kindLabels[event.kind])} · ${escapeHtml(eventMeta(event))}</span>`;
+      <span>${escapeHtml(eventRangeText(event))} · ${escapeHtml(kindLabels[event.kind])} · ${escapeHtml(eventMeta(event))}</span>`;
     item.addEventListener("click", () => openEventDialog(event));
     return item;
   }));
@@ -329,6 +365,7 @@ function openEventDialog(event = null) {
   document.querySelector("#event-id").value = event?.id || "";
   document.querySelector("#event-title").value = event?.title || "";
   document.querySelector("#event-date").value = event?.date || today;
+  document.querySelector("#event-end-date").value = event?.end_date || event?.date || today;
   document.querySelector("#event-start").value = event?.start || "12:00";
   document.querySelector("#event-end").value = event?.end || "13:00";
   document.querySelector("#event-kind").value = event?.kind || "personal";
@@ -348,14 +385,17 @@ function closeEventDialog() {
 function readEventForm() {
   const title = document.querySelector("#event-title").value.trim();
   const date = document.querySelector("#event-date").value;
+  const endDate = document.querySelector("#event-end-date").value || date;
   const start = document.querySelector("#event-start").value;
   const end = document.querySelector("#event-end").value;
   if (!title) throw new Error("Нужно указать название");
-  if (!date || !start || !end) throw new Error("Нужно указать дату и время");
-  if (timeToMinutes(end) <= timeToMinutes(start)) throw new Error("Конец должен быть позже начала");
+  if (!date || !endDate || !start || !end) throw new Error("Нужно указать даты и время");
+  if (endDate < date) throw new Error("Дата окончания не может быть раньше даты начала");
+  if (endDate === date && timeToMinutes(end) <= timeToMinutes(start)) throw new Error("Конец должен быть позже начала");
   return {
     title,
     date,
+    end_date: endDate,
     start,
     end,
     kind: document.querySelector("#event-kind").value,
@@ -465,6 +505,11 @@ document.querySelector("#add-event-button").addEventListener("click", () => open
 document.querySelector("#event-form").addEventListener("submit", saveEvent);
 document.querySelector("#delete-event").addEventListener("click", deleteEvent);
 document.querySelector("#event-kind").addEventListener("change", syncKindDefaults);
+document.querySelector("#event-date").addEventListener("change", () => {
+  const startDate = document.querySelector("#event-date").value;
+  const endDate = document.querySelector("#event-end-date");
+  if (!endDate.value || endDate.value < startDate) endDate.value = startDate;
+});
 document.querySelector(".dialog-close").addEventListener("click", closeEventDialog);
 document.querySelector("[data-close-dialog]").addEventListener("click", closeEventDialog);
 document.querySelector("#event-dialog").addEventListener("click", event => {
