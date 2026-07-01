@@ -1,6 +1,6 @@
 const TOMSK_TIME_ZONE = "Asia/Tomsk";
 const DAY_END_MINUTES = 24 * 60;
-const VISIBLE_DAYS = 14;
+const VISIBLE_DAYS = 7;
 const RELATIONSHIP_START = new Date("2026-06-07T21:00:00+07:00");
 const FIRST_MEETING = new Date("2026-06-14T03:00:00+07:00");
 const FIRST_KISS = new Date("2026-06-15T00:00:00+07:00");
@@ -38,6 +38,7 @@ const weekdayFormatter = new Intl.DateTimeFormat("ru-RU", { timeZone: TOMSK_TIME
 let activeViewer = ["dima", "alexandra"].includes(localStorage.getItem("schedule-viewer")) ? localStorage.getItem("schedule-viewer") : "dima";
 let events = [];
 let visibleDates = [];
+let weekStartDate = getWeekStartDate(getTomskDateKey(getNow()));
 
 function getNow() {
   const override = new URLSearchParams(location.search).get("now");
@@ -52,6 +53,13 @@ function getTomskDateKey(now) {
 
 function dateAtNoon(date) {
   return new Date(`${date}T12:00:00+07:00`);
+}
+
+function getWeekStartDate(date) {
+  const cursor = dateAtNoon(date);
+  const day = cursor.getUTCDay() || 7;
+  cursor.setUTCDate(cursor.getUTCDate() - day + 1);
+  return cursor.toISOString().slice(0, 10);
 }
 
 function eventDate(date, time) {
@@ -275,11 +283,24 @@ function updateClock() {
 }
 
 function updateVisibleRange() {
-  const today = getTomskDateKey(getNow());
-  visibleDates = dayRangeFrom(today, VISIBLE_DAYS);
+  visibleDates = dayRangeFrom(weekStartDate, VISIBLE_DAYS);
   const first = rowDateFormatter.format(dateAtNoon(visibleDates[0]));
   const last = rowDateFormatter.format(dateAtNoon(visibleDates[visibleDates.length - 1]));
   document.querySelector("#visible-range").textContent = `${first} — ${last}`;
+  document.querySelector("#week-range").textContent = `${first} — ${last}`;
+}
+
+function setWeekStart(date, keepScroll = false) {
+  weekStartDate = getWeekStartDate(date);
+  updateVisibleRange();
+  renderSchedule(keepScroll);
+  scrollToDaytime();
+}
+
+function shiftWeek(delta) {
+  const cursor = dateAtNoon(weekStartDate);
+  cursor.setUTCDate(cursor.getUTCDate() + delta * VISIBLE_DAYS);
+  setWeekStart(cursor.toISOString().slice(0, 10));
 }
 
 async function loadEvents() {
@@ -433,7 +454,10 @@ loadEvents().catch(error => {
 document.querySelectorAll(".viewer-button").forEach(button => button.addEventListener("click", () => setViewer(button.dataset.viewer)));
 document.querySelectorAll('input[name="category"], input[name="kind"], input[name="participant"]').forEach(input => input.addEventListener("change", () => renderSchedule(true)));
 document.querySelector("#show-past").addEventListener("change", applyPastFilter);
+document.querySelector("#prev-week-button").addEventListener("click", () => shiftWeek(-1));
+document.querySelector("#next-week-button").addEventListener("click", () => shiftWeek(1));
 document.querySelector("#today-button").addEventListener("click", () => {
+  setWeekStart(getTomskDateKey(getNow()), true);
   const row = document.querySelector(`#day-${getTomskDateKey(getNow())}`);
   (row || document.querySelector(".schedule-section")).scrollIntoView({ behavior: "smooth", block: "center" });
 });
@@ -448,13 +472,13 @@ document.querySelector("#event-dialog").addEventListener("click", event => {
 });
 
 setInterval(() => {
-  const previousDay = visibleDates[0];
+  const previousToday = getTomskDateKey(getNow());
+  const currentWeekWasVisible = weekStartDate === getWeekStartDate(previousToday);
   const oldMinute = document.querySelector("#tomsk-time").textContent.slice(0, 5);
   const now = updateClock();
   const newDay = getTomskDateKey(now);
-  if (newDay !== previousDay) {
-    updateVisibleRange();
-    renderSchedule(true);
+  if (newDay !== previousToday && currentWeekWasVisible) {
+    setWeekStart(newDay, true);
   } else if (timeFormatter.format(now).slice(0, 5) !== oldMinute) {
     renderStatus();
   }

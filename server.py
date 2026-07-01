@@ -22,6 +22,23 @@ TIME_RE = re.compile(r"^(?:[01]\d|2[0-3]):[0-5]\d$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 DB_LOCK = threading.Lock()
 
+F1_BACKGROUND_EVENTS = [
+    ("f1-2026-britain-race", "F1: Гран-при Великобритании", "2026-07-05", "21:00", "23:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
+    ("f1-2026-belgium-race", "F1: Гран-при Бельгии", "2026-07-19", "20:00", "22:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
+    ("f1-2026-hungary-race", "F1: Гран-при Венгрии", "2026-07-26", "20:00", "22:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
+    ("f1-2026-netherlands-race", "F1: Гран-при Нидерландов", "2026-08-23", "20:00", "22:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
+    ("f1-2026-italy-race", "F1: Гран-при Италии", "2026-09-06", "20:00", "22:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
+    ("f1-2026-spain-race", "F1: Гран-при Испании", "2026-09-13", "20:00", "22:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
+    ("f1-2026-azerbaijan-race", "F1: Гран-при Азербайджана", "2026-09-26", "18:00", "20:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
+    ("f1-2026-singapore-race", "F1: Гран-при Сингапура", "2026-10-11", "19:00", "21:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
+    ("f1-2026-usa-race", "F1: Гран-при США", "2026-10-26", "03:00", "05:00", "Гонка. Время переведено из МСК в Томск (+4 часа): старт 25.10 в 23:00 МСК."),
+    ("f1-2026-mexico-race", "F1: Гран-при Мексики", "2026-11-02", "03:00", "05:00", "Гонка. Время переведено из МСК в Томск (+4 часа): старт 01.11 в 23:00 МСК."),
+    ("f1-2026-brazil-race", "F1: Гран-при Бразилии", "2026-11-09", "00:00", "02:00", "Гонка. Время переведено из МСК в Томск (+4 часа): старт 08.11 в 20:00 МСК."),
+    ("f1-2026-las-vegas-race", "F1: Гран-при Лас-Вегаса", "2026-11-22", "11:00", "13:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
+    ("f1-2026-qatar-race", "F1: Гран-при Катара", "2026-11-29", "23:00", "23:59", "Гонка. Время переведено из МСК в Томск (+4 часа); событие обрезано до конца суток в текущей модели расписания."),
+    ("f1-2026-abu-dhabi-race", "F1: Гран-при Абу-Даби", "2026-12-06", "20:00", "22:00", "Гонка. Время переведено из МСК в Томск (+4 часа). Источник: Чемпионат."),
+]
+
 
 def connect():
     connection = sqlite3.connect(DB_PATH)
@@ -51,6 +68,7 @@ def init_database():
             """
             CREATE TABLE IF NOT EXISTS schedule_events (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                source_key TEXT UNIQUE,
                 title TEXT NOT NULL,
                 date TEXT NOT NULL,
                 start TEXT NOT NULL,
@@ -64,6 +82,40 @@ def init_database():
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
             """
+        )
+        columns = {row["name"] for row in db.execute("PRAGMA table_info(schedule_events)").fetchall()}
+        if "source_key" not in columns:
+            db.execute("ALTER TABLE schedule_events ADD COLUMN source_key TEXT")
+        db.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_schedule_events_source_key
+            ON schedule_events(source_key)
+            """
+        )
+        seed_f1_events(db)
+
+
+def seed_f1_events(db):
+    for source_key, title, date, start, end, note in F1_BACKGROUND_EVENTS:
+        db.execute(
+            """
+            INSERT INTO schedule_events
+                (source_key, title, date, start, end, kind, category, participant, note, author)
+            VALUES
+                (?, ?, ?, ?, ?, 'background', 'background', 'background', ?, 'dima')
+            ON CONFLICT(source_key)
+            DO UPDATE SET
+                title=excluded.title,
+                date=excluded.date,
+                start=excluded.start,
+                end=excluded.end,
+                kind=excluded.kind,
+                category=excluded.category,
+                participant=excluded.participant,
+                note=excluded.note,
+                updated_at=CURRENT_TIMESTAMP
+            """,
+            (source_key, title, date, start, end, note),
         )
 
 
@@ -172,7 +224,7 @@ class Handler(SimpleHTTPRequestHandler):
             with DB_LOCK, connect() as db:
                 rows = db.execute(
                     """
-                    SELECT id, title, date, start, end, kind, category, participant, note, author, created_at, updated_at
+                    SELECT id, source_key, title, date, start, end, kind, category, participant, note, author, created_at, updated_at
                     FROM schedule_events
                     ORDER BY date, start, end, id
                     """
@@ -210,7 +262,7 @@ class Handler(SimpleHTTPRequestHandler):
                     )
                     row = db.execute(
                         """
-                        SELECT id, title, date, start, end, kind, category, participant, note, author, created_at, updated_at
+                        SELECT id, source_key, title, date, start, end, kind, category, participant, note, author, created_at, updated_at
                         FROM schedule_events
                         WHERE id = ?
                         """,
@@ -270,7 +322,7 @@ class Handler(SimpleHTTPRequestHandler):
                     return
                 row = db.execute(
                     """
-                    SELECT id, title, date, start, end, kind, category, participant, note, author, created_at, updated_at
+                    SELECT id, source_key, title, date, start, end, kind, category, participant, note, author, created_at, updated_at
                     FROM schedule_events
                     WHERE id = ?
                     """,
