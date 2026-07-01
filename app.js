@@ -122,8 +122,9 @@ function selectedValues(name) {
 }
 
 function eventMatchesFilters(event) {
+  if (!selectedValues("kind").includes(event.kind)) return false;
+  if (event.kind === "background") return true;
   return selectedValues("category").includes(event.category)
-    && selectedValues("kind").includes(event.kind)
     && selectedValues("participant").includes(event.participant);
 }
 
@@ -151,7 +152,9 @@ function getState(now) {
 }
 
 function eventMeta(event) {
-  const parts = [participantLabels[event.participant], categoryById[event.category]?.label, event.note].filter(Boolean);
+  const parts = event.kind === "background"
+    ? [kindLabels[event.kind], event.note]
+    : [participantLabels[event.participant], categoryById[event.category]?.label, event.note];
   return parts.join(" · ");
 }
 
@@ -294,7 +297,7 @@ function applyPastFilter() {
 
 function renderFilters() {
   const target = document.querySelector("#category-filters");
-  target.replaceChildren(...categories.map(category => {
+  target.replaceChildren(...categories.filter(category => category.id !== "background").map(category => {
     const label = document.createElement("label");
     label.innerHTML = `<input type="checkbox" name="category" value="${category.id}" checked> ${category.label}`;
     label.style.setProperty("--event-color", category.color);
