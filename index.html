@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Расписание Димы и любимки с общим временем для встреч по Томску.">
-  <title>Расписание твоей любимки</title>
+  <meta name="description" content="Общее расписание Димы и Александры с личными делами, совместными предложениями и фоновыми событиями.">
+  <title>Общее расписание</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main class="page-shell">
     <header class="site-header">
       <div>
-        <h1>Расписание твоей любимки <span class="title-heart" aria-hidden="true">♡</span></h1>
-        <p>Ищем время друг для друга</p>
+        <h1>Общее расписание <span class="title-heart" aria-hidden="true">♡</span></h1>
+        <p>Планы, дела, предложения и фоновые события</p>
       </div>
       <div class="tomsk-clock" aria-live="polite">
         <div class="clock-zone">
@@ -20,14 +20,14 @@
           <span>Томск, UTC+7</span>
         </div>
         <strong id="tomsk-time">--:--:--</strong>
-        <span id="tomsk-date">Загрузка даты…</span>
+        <span id="tomsk-date">Загрузка даты...</span>
       </div>
     </header>
 
     <section class="love-counters" aria-labelledby="love-heading">
       <div class="counter-main">
         <p id="love-heading">Мы общаемся</p>
-        <strong id="together-counter">Считаем…</strong>
+        <strong id="together-counter">Считаем...</strong>
         <span>с 7 июня 2026, 21:00 по Томску</span>
       </div>
       <article class="milestone">
@@ -35,7 +35,7 @@
         <div>
           <p>Первая встреча</p>
           <strong>14 июня, 03:00</strong>
-          <span id="meeting-counter">Считаем…</span>
+          <span id="meeting-counter">Считаем...</span>
         </div>
       </article>
       <article class="milestone">
@@ -43,55 +43,73 @@
         <div>
           <p>Первый поцелуй</p>
           <strong>15 июня 2026</strong>
-          <span id="kiss-counter">Считаем…</span>
+          <span id="kiss-counter">Считаем...</span>
         </div>
       </article>
-    </section>
-
-    <section class="profile-switch" aria-label="Выбор расписания">
-      <button class="profile-tab is-active" type="button" data-profile="dima" aria-pressed="true">
-        <span class="profile-dot dima-dot" aria-hidden="true"></span>
-        Расписание Дима
-      </button>
-      <button class="profile-tab" type="button" data-profile="love" aria-pressed="false">
-        <span class="profile-dot love-dot" aria-hidden="true"></span>
-        Расписание Любимка
-      </button>
     </section>
 
     <section class="viewer-panel" aria-labelledby="viewer-heading">
       <div>
         <p id="viewer-heading">Кто сейчас на сайте?</p>
-        <span>Выбор сохранится на этом устройстве</span>
+        <span>Нужно для подписи новых занятий</span>
       </div>
       <div class="viewer-switch" role="group" aria-label="Текущий пользователь">
         <button class="viewer-button is-active" type="button" data-viewer="dima" aria-pressed="true">Дима</button>
-        <button class="viewer-button" type="button" data-viewer="alexandra" aria-pressed="false">Александра (Любимка)</button>
+        <button class="viewer-button" type="button" data-viewer="alexandra" aria-pressed="false">Александра</button>
       </div>
     </section>
 
     <section class="status-panel" aria-labelledby="status-heading">
-      <h2 id="status-heading" class="sr-only">Текущее состояние выбранного расписания</h2>
+      <h2 id="status-heading" class="sr-only">Текущее состояние расписания</h2>
       <article class="status-block status-now">
-        <p class="status-label"><span id="active-person">Дима</span> сейчас</p>
+        <p class="status-label">Сейчас</p>
         <div id="current-status"></div>
       </article>
       <article class="status-block">
-        <p class="status-label">Следующее событие</p>
+        <p class="status-label">Следующее занятие</p>
         <div id="next-status"></div>
       </article>
       <article class="status-block date-range-block">
-        <p class="status-label">Период расписания</p>
-        <strong>15 июня — 1 июля 2026</strong>
+        <p class="status-label">Период на экране</p>
+        <strong id="visible-range">Ближайшие дни</strong>
         <span>Все время указано по Томску</span>
       </article>
+    </section>
+
+    <section class="controls-card" aria-labelledby="controls-heading">
+      <div class="controls-head">
+        <div>
+          <h2 id="controls-heading">Фильтры и добавление</h2>
+          <p>Фоновые события видны под основным расписанием и не мешают личным делам.</p>
+        </div>
+        <button id="add-event-button" class="button-primary" type="button">Добавить занятие</button>
+      </div>
+      <div class="filters-grid">
+        <fieldset>
+          <legend>Категории</legend>
+          <div id="category-filters" class="filter-list"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Тип</legend>
+          <label><input type="checkbox" name="kind" value="personal" checked> Личное / обычное</label>
+          <label><input type="checkbox" name="kind" value="proposal" checked> Совместные предложения</label>
+          <label><input type="checkbox" name="kind" value="background" checked> Фоновое расписание</label>
+        </fieldset>
+        <fieldset>
+          <legend>Участники</legend>
+          <label><input type="checkbox" name="participant" value="dima" checked> Дима</label>
+          <label><input type="checkbox" name="participant" value="alexandra" checked> Александра</label>
+          <label><input type="checkbox" name="participant" value="both" checked> Вместе</label>
+          <label><input type="checkbox" name="participant" value="background" checked> Фон</label>
+        </fieldset>
+      </div>
     </section>
 
     <section class="schedule-section" aria-labelledby="schedule-heading">
       <div class="toolbar">
         <div>
-          <h2 id="schedule-heading">Расписание Дима</h2>
-          <p id="schedule-caption">Полные сутки: от 00:00 до 24:00</p>
+          <h2 id="schedule-heading">Общее расписание</h2>
+          <p>Полные сутки: от 00:00 до 24:00. Горизонтальная прокрутка по времени.</p>
         </div>
         <div class="toolbar-actions">
           <label class="check-control">
@@ -103,7 +121,7 @@
       </div>
 
       <div class="scroll-hint">Прокручивай расписание по времени →</div>
-      <div id="timeline-scroll" class="timeline-scroll" tabindex="0" aria-label="Расписание с горизонтальной прокруткой по времени">
+      <div id="timeline-scroll" class="timeline-scroll" tabindex="0" aria-label="Общее расписание с горизонтальной прокруткой по времени">
         <div class="timeline-canvas">
           <div class="timeline-head" aria-hidden="true">
             <span class="date-column-title">Дата</span>
@@ -121,22 +139,20 @@
         </div>
       </div>
       <div class="legend" aria-label="Обозначения">
-        <span><i class="legend-swatch sleep"></i>Сладко спим</span>
-        <span><i class="legend-swatch busy"></i>Занятия / работа</span>
-        <span><i class="legend-swatch free"></i>Можно встретиться</span>
-        <span><i class="legend-swatch request"></i>Есть желание встретиться</span>
+        <span><i class="legend-swatch personal"></i>Личное / обычное</span>
+        <span><i class="legend-swatch proposal"></i>Совместное предложение</span>
+        <span><i class="legend-swatch background"></i>Фоновое событие</span>
       </div>
     </section>
 
-    <section class="disciplines" aria-labelledby="disciplines-heading">
+    <section class="event-list-card" aria-labelledby="event-list-heading">
       <div class="section-heading-row">
         <div>
-          <h2 id="disciplines-heading">Дисциплины Димы</h2>
-          <p>Полные названия и преподаватели</p>
+          <h2 id="event-list-heading">Список занятий</h2>
+          <p id="event-count">Загрузка...</p>
         </div>
-        <button id="disciplines-toggle" class="text-button" type="button" aria-expanded="false" aria-controls="disciplines-list">Показать список</button>
       </div>
-      <div id="disciplines-list" class="disciplines-grid" hidden></div>
+      <div id="event-list" class="event-list"></div>
     </section>
   </main>
 
@@ -144,24 +160,65 @@
     <div class="status-empty"><strong></strong><span></span></div>
   </template>
 
-  <dialog id="request-dialog" class="request-dialog">
-    <form id="request-form" method="dialog">
+  <dialog id="event-dialog" class="event-dialog">
+    <form id="event-form" method="dialog">
       <div class="dialog-heading">
         <div>
-          <p>Хочу встретиться</p>
-          <h2 id="request-slot-title">Свободное время</h2>
+          <p id="event-dialog-kicker">Новое занятие</p>
+          <h2 id="event-dialog-title">Добавить в расписание</h2>
         </div>
         <button class="dialog-close" type="button" aria-label="Закрыть">×</button>
       </div>
-      <p id="request-author" class="request-author"></p>
-      <label for="request-message">Что хочется сделать?</label>
-      <textarea id="request-message" maxlength="500" rows="4" placeholder="Например: погулять, сходить в кафе или просто побыть вместе"></textarea>
-      <div id="slot-requests" class="slot-requests"></div>
-      <p id="request-error" class="form-error" role="alert" hidden></p>
+
+      <input id="event-id" type="hidden">
+      <div class="form-grid">
+        <label class="form-field full">
+          <span>Название</span>
+          <input id="event-title" maxlength="120" required placeholder="Работа, тренировка, гран-при, прогулка">
+        </label>
+        <label class="form-field">
+          <span>Дата</span>
+          <input id="event-date" type="date" required>
+        </label>
+        <label class="form-field">
+          <span>Начало</span>
+          <input id="event-start" type="time" required>
+        </label>
+        <label class="form-field">
+          <span>Конец</span>
+          <input id="event-end" type="time" required>
+        </label>
+        <label class="form-field">
+          <span>Тип</span>
+          <select id="event-kind">
+            <option value="personal">Личное / обычное</option>
+            <option value="proposal">Совместное предложение</option>
+            <option value="background">Фоновое событие</option>
+          </select>
+        </label>
+        <label class="form-field">
+          <span>Категория</span>
+          <select id="event-category"></select>
+        </label>
+        <label class="form-field">
+          <span>Для кого</span>
+          <select id="event-participant">
+            <option value="dima">Дима</option>
+            <option value="alexandra">Александра</option>
+            <option value="both">Вместе</option>
+            <option value="background">Фон</option>
+          </select>
+        </label>
+        <label class="form-field full">
+          <span>Комментарий</span>
+          <textarea id="event-note" maxlength="700" rows="4" placeholder="Куда сходить, что взять, ссылка на матч, детали дела"></textarea>
+        </label>
+      </div>
+      <p id="event-error" class="form-error" role="alert" hidden></p>
       <div class="dialog-actions">
-        <button id="delete-request" class="button-secondary" type="button" hidden>Убрать мою отметку</button>
+        <button id="delete-event" class="button-secondary danger" type="button" hidden>Удалить</button>
         <button class="button-secondary" type="button" data-close-dialog>Отмена</button>
-        <button id="save-request" class="button-primary" type="submit">Сохранить желание</button>
+        <button id="save-event" class="button-primary" type="submit">Сохранить</button>
       </div>
     </form>
   </dialog>
