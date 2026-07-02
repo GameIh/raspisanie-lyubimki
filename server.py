@@ -140,6 +140,16 @@ def init_database():
             )
             """
         )
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS date_ideas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                author TEXT NOT NULL,
+                idea TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
         columns = {row["name"] for row in db.execute("PRAGMA table_info(schedule_events)").fetchall()}
         if "source_key" not in columns:
             db.execute("ALTER TABLE schedule_events ADD COLUMN source_key TEXT")
@@ -276,6 +286,18 @@ def validate_event(payload):
     }
 
 
+def validate_date_idea(payload):
+    author = str(payload.get("author", "")).strip()
+    idea = str(payload.get("idea", "")).strip()
+    if author not in ALLOWED_AUTHORS:
+        raise ValueError("Неизвестный автор")
+    if not idea:
+        raise ValueError("Нужно написать идею свидания")
+    if len(idea) > 700:
+        raise ValueError("Идея слишком длинная")
+    return author, idea
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
@@ -311,6 +333,17 @@ class Handler(SimpleHTTPRequestHandler):
                     """
                 ).fetchall()
             self.send_json(200, {"events": [dict(row) for row in rows]})
+            return
+        if parsed.path == "/api/date-ideas":
+            with DB_LOCK, connect() as db:
+                rows = db.execute(
+                    """
+                    SELECT id, author, idea, created_at
+                    FROM date_ideas
+                    ORDER BY created_at DESC, id DESC
+                    """
+                ).fetchall()
+            self.send_json(200, {"ideas": [dict(row) for row in rows]})
             return
         if parsed.path == "/api/requests":
             with DB_LOCK, connect() as db:
@@ -350,6 +383,22 @@ class Handler(SimpleHTTPRequestHandler):
                         (cursor.lastrowid,),
                     ).fetchone()
                 self.send_json(201, {"event": dict(row)})
+            except (ValueError, json.JSONDecodeError) as error:
+                self.send_json(400, {"error": str(error)})
+            return
+        if parsed.path == "/api/date-ideas":
+            try:
+                author, idea = validate_date_idea(self.read_json())
+                with DB_LOCK, connect() as db:
+                    cursor = db.execute(
+                        "INSERT INTO date_ideas (author, idea) VALUES (?, ?)",
+                        (author, idea),
+                    )
+                    row = db.execute(
+                        "SELECT id, author, idea, created_at FROM date_ideas WHERE id = ?",
+                        (cursor.lastrowid,),
+                    ).fetchone()
+                self.send_json(201, {"idea": dict(row)})
             except (ValueError, json.JSONDecodeError) as error:
                 self.send_json(400, {"error": str(error)})
             return
@@ -416,6 +465,15 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_DELETE(self):
         parsed = urlparse(self.path)
+        idea_id = self.date_idea_id_from_path(parsed.path)
+        if idea_id is not None:
+            with DB_LOCK, connect() as db:
+                cursor = db.execute("DELETE FROM date_ideas WHERE id = ?", (idea_id,))
+            if cursor.rowcount == 0:
+                self.send_json(404, {"error": "Идея не найдена"})
+            else:
+                self.send_json(200, {"ok": True})
+            return
         event_id = self.event_id_from_path(parsed.path)
         if event_id is not None:
             with DB_LOCK, connect() as db:
@@ -442,6 +500,11 @@ class Handler(SimpleHTTPRequestHandler):
     @staticmethod
     def event_id_from_path(path):
         match = re.fullmatch(r"/api/events/(\d+)", path)
+        return int(match.group(1)) if match else None
+
+    @staticmethod
+    def date_idea_id_from_path(path):
+        match = re.fullmatch(r"/api/date-ideas/(\d+)", path)
         return int(match.group(1)) if match else None
 
     def log_message(self, format_string, *args):

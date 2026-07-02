@@ -161,6 +161,43 @@
           </div>
           <div id="event-list" class="event-list"></div>
         </section>
+
+        <section class="date-ideas-card" aria-labelledby="date-ideas-heading">
+          <div class="section-heading-row">
+            <div>
+              <h2 id="date-ideas-heading">Предложения свиданий</h2>
+              <p id="date-ideas-count">Загрузка...</p>
+            </div>
+          </div>
+          <form id="date-idea-form" class="date-idea-form">
+            <label class="form-field">
+              <span>Кто предлагает</span>
+              <select id="date-idea-author">
+                <option value="dima">Дима</option>
+                <option value="alexandra">Александра</option>
+              </select>
+            </label>
+            <label class="form-field date-idea-text">
+              <span>Вариант свидания</span>
+              <textarea id="date-idea-text" maxlength="700" rows="3" required placeholder="Куда сходить, что приготовить, где погулять или что попробовать вместе"></textarea>
+            </label>
+            <button class="button-primary" type="submit">Предложить</button>
+          </form>
+          <p id="date-idea-error" class="form-error" role="alert" hidden></p>
+          <div class="date-ideas-table-wrap">
+            <table class="date-ideas-table">
+              <thead>
+                <tr>
+                  <th>Кто</th>
+                  <th>Идея</th>
+                  <th>Когда</th>
+                  <th><span class="sr-only">Действия</span></th>
+                </tr>
+              </thead>
+              <tbody id="date-ideas-list"></tbody>
+            </table>
+          </div>
+        </section>
       </div>
     </div>
   </main>

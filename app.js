@@ -34,9 +34,11 @@ const fullDateFormatter = new Intl.DateTimeFormat("ru-RU", { timeZone: TOMSK_TIM
 const rowDateFormatter = new Intl.DateTimeFormat("ru-RU", { timeZone: TOMSK_TIME_ZONE, day: "2-digit", month: "2-digit", year: "numeric" });
 const shortDateFormatter = new Intl.DateTimeFormat("ru-RU", { timeZone: TOMSK_TIME_ZONE, day: "numeric", month: "long", weekday: "long" });
 const weekdayFormatter = new Intl.DateTimeFormat("ru-RU", { timeZone: TOMSK_TIME_ZONE, weekday: "long" });
+const dateIdeaFormatter = new Intl.DateTimeFormat("ru-RU", { timeZone: TOMSK_TIME_ZONE, day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
 let activeViewer = ["dima", "alexandra"].includes(localStorage.getItem("schedule-viewer")) ? localStorage.getItem("schedule-viewer") : "dima";
 let events = [];
+let dateIdeas = [];
 let visibleDates = [];
 let weekStartDate = getWeekStartDate(getTomskDateKey(getNow()));
 
@@ -350,14 +352,90 @@ async function loadEvents() {
   renderSchedule(true);
 }
 
+function formatIdeaDate(value) {
+  const parsed = new Date(`${String(value).replace(" ", "T")}Z`);
+  return Number.isNaN(parsed.getTime()) ? value : dateIdeaFormatter.format(parsed);
+}
+
+function renderDateIdeas() {
+  const target = document.querySelector("#date-ideas-list");
+  document.querySelector("#date-ideas-count").textContent = `${dateIdeas.length} ${plural(dateIdeas.length, ["идея", "идеи", "идей"])}`;
+  if (!dateIdeas.length) {
+    target.innerHTML = '<tr><td colspan="4" class="date-ideas-empty">Пока нет предложений. Добавь первый вариант свидания.</td></tr>';
+    return;
+  }
+  target.replaceChildren(...dateIdeas.map(idea => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td><strong>${escapeHtml(participantLabels[idea.author] || idea.author)}</strong></td>
+      <td>${escapeHtml(idea.idea)}</td>
+      <td>${escapeHtml(formatIdeaDate(idea.created_at))}</td>
+      <td><button class="text-danger-button" type="button" data-idea-id="${idea.id}">Удалить</button></td>`;
+    row.querySelector("button").addEventListener("click", () => deleteDateIdea(idea.id));
+    return row;
+  }));
+}
+
+async function loadDateIdeas() {
+  const response = await fetch("/api/date-ideas", { cache: "no-store" });
+  if (!response.ok) throw new Error("Не удалось загрузить предложения свиданий");
+  const payload = await response.json();
+  dateIdeas = Array.isArray(payload.ideas) ? payload.ideas : [];
+  renderDateIdeas();
+}
+
 function setViewer(viewer) {
   activeViewer = viewer;
   localStorage.setItem("schedule-viewer", viewer);
+  const ideaAuthor = document.querySelector("#date-idea-author");
+  if (ideaAuthor) ideaAuthor.value = viewer;
   document.querySelectorAll(".viewer-button").forEach(button => {
     const active = button.dataset.viewer === viewer;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-pressed", String(active));
   });
+}
+
+async function saveDateIdea(event) {
+  event.preventDefault();
+  const errorTarget = document.querySelector("#date-idea-error");
+  const button = document.querySelector("#date-idea-form button");
+  const payload = {
+    author: document.querySelector("#date-idea-author").value,
+    idea: document.querySelector("#date-idea-text").value.trim()
+  };
+  errorTarget.hidden = true;
+  button.disabled = true;
+  try {
+    const response = await fetch("/api/date-ideas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Не удалось сохранить идею");
+    document.querySelector("#date-idea-text").value = "";
+    await loadDateIdeas();
+  } catch (error) {
+    errorTarget.textContent = error.message;
+    errorTarget.hidden = false;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function deleteDateIdea(id) {
+  const errorTarget = document.querySelector("#date-idea-error");
+  errorTarget.hidden = true;
+  try {
+    const response = await fetch(`/api/date-ideas/${id}`, { method: "DELETE" });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Не удалось удалить идею");
+    await loadDateIdeas();
+  } catch (error) {
+    errorTarget.textContent = error.message;
+    errorTarget.hidden = false;
+  }
 }
 
 function openEventDialog(event = null) {
@@ -493,6 +571,10 @@ loadEvents().catch(error => {
   console.error(error);
   renderEmptyStatus(document.querySelector("#current-status"), "Сервер недоступен", "Не удалось загрузить общее расписание");
 });
+loadDateIdeas().catch(error => {
+  console.error(error);
+  document.querySelector("#date-ideas-count").textContent = "Не удалось загрузить";
+});
 
 document.querySelectorAll(".viewer-button").forEach(button => button.addEventListener("click", () => setViewer(button.dataset.viewer)));
 document.querySelectorAll('input[name="category"], input[name="kind"], input[name="participant"]').forEach(input => input.addEventListener("change", () => renderSchedule(true)));
@@ -506,6 +588,7 @@ document.querySelector("#today-button").addEventListener("click", () => {
 });
 document.querySelector("#add-event-button").addEventListener("click", () => openEventDialog());
 document.querySelector("#event-form").addEventListener("submit", saveEvent);
+document.querySelector("#date-idea-form").addEventListener("submit", saveDateIdea);
 document.querySelector("#delete-event").addEventListener("click", deleteEvent);
 document.querySelector("#event-kind").addEventListener("change", syncKindDefaults);
 document.querySelector("#event-date").addEventListener("change", () => {
@@ -537,3 +620,9 @@ setInterval(() => {
     loadEvents().catch(console.error);
   }
 }, 15000);
+
+setInterval(() => {
+  if (!document.hidden) {
+    loadDateIdeas().catch(console.error);
+  }
+}, 20000);
